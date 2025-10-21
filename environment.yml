@@ -1,0 +1,37 @@
+name: ball-action-spotting
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python
+  - python=3.10
+  
+  # Core dependencies
+  - numpy=1.24.3
+  - scipy=1.10.1
+  - scikit-learn=1.2.2
+  - tqdm=4.65.0
+  
+  # Computer Vision
+  - opencv=4.7.0
+  - pytorch>=2.0,<2.6  # Pin to compatible version with torchvision
+  - torchvision>=0.15,<0.21  # Compatible with pytorch 2.0-2.5
+  - cudatoolkit=11.8  # Adjust based on your CUDA version
+  
+  # Pip dependencies (not available in conda or need specific versions)
+  - pip
+  - pip:
+    - rosny==0.0.6
+    - SoccerNet
+    - timm==0.9.2
+    - kornia==0.6.12
+    - pytorch-argus==1.0.0
+    - ultralytics>=8.0.0
+    - lap>=0.4.0
+    # Note: VideoProcessingFramework (NvDec) is optional and requires NVIDIA GPU + drivers
+    # Uncomment if you have NVIDIA GPU and need hardware video decoding:
+    # - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0
+    # - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0#subdirectory=src/PytorchNvCodec

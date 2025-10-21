@@ -6,3 +6,4 @@ try:
     from src.frame_fetchers.nvdec import NvDecFrameFetcher
 except ImportError:
     NvDecFrameFetcher = None
+
