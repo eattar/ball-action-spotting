@@ -211,7 +211,8 @@ class PlayerTracker:
     def select_player_interactive(
         self,
         video_path: str,
-        frame_idx: int = 0
+        frame_idx: int = 0,
+        headless: bool = False
     ) -> Optional[int]:
         """
         Show a frame and let user select which player to track
@@ -219,10 +220,15 @@ class PlayerTracker:
         Args:
             video_path: Path to video
             frame_idx: Frame to show for selection
+            headless: If True, don't show GUI (for servers without display)
             
         Returns:
             Selected track_id or None
         """
+        # Check if running headless or if display is not available
+        if headless or not self._has_display():
+            return self._select_player_text_mode()
+        
         cap = cv2.VideoCapture(video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = cap.read()
@@ -249,45 +255,103 @@ class PlayerTracker:
         boxes = results[0].boxes
         track_ids = boxes.id.cpu().numpy().astype(int)
         
-        # Draw bounding boxes with track IDs
-        display_frame = frame.copy()
-        
-        for box, track_id in zip(boxes, track_ids):
-            bbox = box.xyxy[0].cpu().numpy().astype(int)
-            
-            cv2.rectangle(
-                display_frame,
-                (bbox[0], bbox[1]),
-                (bbox[2], bbox[3]),
-                (0, 255, 0),
-                2
-            )
-            cv2.putText(
-                display_frame,
-                f"ID: {track_id}",
-                (bbox[0], bbox[1] - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
-        
-        # Show frame
-        cv2.imshow("Select Player - Press ESC when done", display_frame)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        
-        # Get user input
-        print(f"\nAvailable player IDs: {sorted(track_ids.tolist())}")
+        # Try to show GUI
         try:
-            player_id = int(input("Enter player ID to track: "))
-            if player_id in track_ids:
+            # Draw bounding boxes with track IDs
+            display_frame = frame.copy()
+            
+            for box, track_id in zip(boxes, track_ids):
+                bbox = box.xyxy[0].cpu().numpy().astype(int)
+                
+                cv2.rectangle(
+                    display_frame,
+                    (bbox[0], bbox[1]),
+                    (bbox[2], bbox[3]),
+                    (0, 255, 0),
+                    2
+                )
+            
+            # Show frame
+            cv2.imshow("Select Player - Press ESC when done", display_frame)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            
+            # Get user input
+            print(f"\nAvailable player IDs: {sorted(track_ids.tolist())}")
+            try:
+                player_id = int(input("Enter player ID to track: "))
+                if player_id in track_ids:
+                    return player_id
+                else:
+                    print(f"Invalid ID. Must be one of: {sorted(track_ids.tolist())}")
+                    return None
+            except ValueError:
+                print("Invalid input")
+                return None
+        except Exception as e:
+            # GUI failed (no display), fall back to text mode
+            print(f"\n⚠️  Cannot show GUI (no display available)")
+            print(f"Falling back to text-based selection...")
+            return self._select_player_text_mode()
+    
+    def _has_display(self) -> bool:
+        """Check if display is available"""
+        import os
+        return 'DISPLAY' in os.environ or os.name == 'nt'  # Windows always has display
+    
+    def _select_player_text_mode(self) -> Optional[int]:
+        """Text-based player selection for headless servers"""
+        if not self.tracks:
+            print("❌ No tracking data available. Run track_video() first.")
+            return None
+        
+        # Get available track IDs sorted by frequency
+        available_ids = self.get_available_track_ids()
+        
+        if not available_ids:
+            print("❌ No players tracked in video")
+            return None
+        
+        print("\n" + "="*60)
+        print("Player Selection (Text Mode)")
+        print("="*60)
+        print(f"\nFound {len(available_ids)} unique players in video")
+        print("\nTop 20 players by appearance frequency:")
+        print()
+        print(f"{'Rank':<6} {'Player ID':<12} {'Frames':<10} {'% of Video':<12}")
+        print("-" * 60)
+        
+        total_frames = len(self.tracks)
+        for rank, track_id in enumerate(available_ids[:20], 1):
+            stats = self.get_track_statistics(track_id)
+            percentage = (stats['num_frames'] / total_frames) * 100
+            print(f"{rank:<6} #{track_id:<11} {stats['num_frames']:<10} {percentage:>6.1f}%")
+        
+        if len(available_ids) > 20:
+            print(f"\n... and {len(available_ids) - 20} more players")
+        
+        print("\n" + "="*60)
+        print("\n💡 Tip: Choose a player with high frame count for better results")
+        print()
+        
+        # Get user selection
+        try:
+            player_id = int(input("Enter Player ID to track (e.g., enter just the number): "))
+            if player_id in available_ids:
+                stats = self.get_track_statistics(player_id)
+                print(f"\n✓ Selected Player #{player_id}")
+                print(f"  Visible in {stats['num_frames']} frames")
+                print(f"  Confidence: {stats['avg_confidence']:.2f}")
                 return player_id
             else:
-                print(f"Invalid ID. Must be one of: {sorted(track_ids.tolist())}")
+                print(f"\n❌ Invalid ID. Must be one of the listed player IDs.")
+                print(f"   Available IDs: {available_ids[:10]}...")
                 return None
         except ValueError:
-            print("Invalid input")
+            print("\n❌ Invalid input. Please enter a number.")
+            return None
+        except (KeyboardInterrupt, EOFError):
+            print("\n\n❌ Selection cancelled")
             return None
     
     def visualize_tracks(
