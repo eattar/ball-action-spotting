@@ -68,6 +68,8 @@ def predict_video(predictor: MultiDimStackerPredictor,
                   game_prediction_dir: Path,
                   use_saved_predictions: bool) -> dict[str, tuple]:
     video_path = game_dir / f"{RESOLUTION}.{constants.videos_extension}" #f"{half}_{RESOLUTION}.mkv"
+    print(f"Looking for video at: {video_path}")
+    print(f"Video exists: {video_path.exists()}")
     video_info = get_video_info(video_path)
     print("Video info:", video_info)
     assert video_info["fps"] == constants.video_fps
@@ -99,6 +101,8 @@ def predict_game(predictor: MultiDimStackerPredictor,
                  prediction_dir: Path,
                  use_saved_predictions: bool):
     game_dir = constants.soccernet_dir / game
+    print(f"SoccerNet dir: {constants.soccernet_dir}")
+    print(f"Game dir: {game_dir}")
     game_prediction_dir = prediction_dir / game
     game_prediction_dir.mkdir(parents=True, exist_ok=True)
     print("Predict game:", game)
