@@ -297,22 +297,49 @@ class PlayerActionCounter:
             predictor.reset_buffers()
             
             # Convert predictions to actions
+            # Note: This model is binary (ball action vs no action), not 12-class
+            # We'll extract ball action frames and label them generically
             frame_indexes = sorted(frame_index2prediction.keys())
             raw_predictions = np.stack([frame_index2prediction[i] for i in frame_indexes], axis=0)
-            class2actions = raw_predictions_to_actions(frame_indexes, raw_predictions)
             
-            # Flatten to single list
-            all_actions = []
-            for class_name, class_actions in class2actions.items():
-                for action_frame, action_confidence in class_actions:
+            # For binary model, just use the positive class (index 1)
+            if raw_predictions.shape[1] == 2:
+                # Binary classification: [no_action, action]
+                action_scores = raw_predictions[:, 1]  # Get "action" probability
+                
+                # Use post-processing to find peaks
+                from src.utils import post_processing
+                action_frames, action_confidences = post_processing(
+                    frame_indexes, 
+                    action_scores, 
+                    **constants.postprocess_params
+                )
+                
+                print(f"  ✓ Detected {len(action_frames)} ball action frames")
+                
+                # Convert to action list (label as generic BALL ACTION for now)
+                all_actions = []
+                for frame, confidence in zip(action_frames, action_confidences):
                     all_actions.append({
-                        'frame': action_frame,
-                        'action': class_name,
-                        'confidence': action_confidence
+                        'frame': frame,
+                        'action': 'BALL ACTION',  # Generic label since model doesn't classify type
+                        'confidence': float(confidence)
                     })
+            else:
+                # Multi-class model - use original logic
+                class2actions = raw_predictions_to_actions(frame_indexes, raw_predictions)
+                
+                # Flatten to single list
+                all_actions = []
+                for class_name, (class_frames, class_confidences) in class2actions.items():
+                    for action_frame, action_confidence in zip(class_frames, class_confidences):
+                        all_actions.append({
+                            'frame': action_frame,
+                            'action': class_name,
+                            'confidence': float(action_confidence)
+                        })
             
             all_actions = sorted(all_actions, key=lambda x: x['frame'])
-            print(f"  ✓ Detected {len(all_actions)} actions")
             return all_actions
             
         except Exception as e:
