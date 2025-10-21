@@ -191,15 +191,35 @@ def match_actions_to_player(actions: List[Dict], tracking_data: Dict) -> List[Di
     """Match ball actions to the tracked player"""
     print("\nMatching actions to player...")
     
+    from src.player_tracking.detector import PlayerDetection
+    
+    # Convert raw detections to PlayerDetection objects for the selected player
+    selected_id = tracking_data['selected_player_id']
+    player_tracks = {}
+    
+    for frame_idx, detections in tracking_data['all_detections'].items():
+        for det in detections:
+            if det['track_id'] == selected_id:
+                # Convert dict to PlayerDetection object
+                bbox = det['bbox']
+                player_tracks[frame_idx] = PlayerDetection(
+                    bbox=bbox,
+                    confidence=det['confidence'],
+                    track_id=det['track_id']
+                )
+                break  # Only need the selected player
+    
+    print(f"Player {selected_id} visible in {len(player_tracks)} frames")
+    
     matcher = ActionPlayerMatcher(temporal_window=50)  # 2 seconds at 25fps
     
     matched_actions = matcher.match_actions_to_player(
         actions,
-        tracking_data['all_detections'],
-        tracking_data['selected_player_id']
+        player_tracks,
+        selected_id
     )
     
-    print(f"Matched {len(matched_actions)} actions to player {tracking_data['selected_player_id']}")
+    print(f"Matched {len(matched_actions)} actions to player {selected_id}")
     
     return matched_actions
 
