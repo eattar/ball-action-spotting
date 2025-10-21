@@ -72,6 +72,29 @@ if __name__ == '__main__':
         sys.exit(0)
     
     video = sys.argv[1]
-    player = int(sys.argv[2]) if len(sys.argv) > 2 else None
+    
+    # Parse player_id with better error handling
+    player = None
+    if len(sys.argv) > 2:
+        try:
+            player = int(sys.argv[2])
+        except ValueError:
+            print(f"❌ Error: Invalid player ID '{sys.argv[2]}'")
+            print(f"   Player ID must be a number (e.g., 7)")
+            print()
+            print("💡 Tip: If your video path has spaces, use quotes:")
+            print(f'   python run_mvp.py "/path/with spaces/video.mp4"')
+            print()
+            print(f"   It looks like you might have unquoted spaces in your path.")
+            print(f"   Received {len(sys.argv)} arguments: {sys.argv[1:]}")
+            sys.exit(1)
+    
+    # Check if video file exists
+    if not os.path.exists(video):
+        print(f"❌ Error: Video file not found: {video}")
+        print()
+        print("💡 Tip: If your path has spaces, use quotes:")
+        print(f'   python run_mvp.py "/path/with spaces/video.mp4"')
+        sys.exit(1)
     
     quick_test(video, player)
