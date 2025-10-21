@@ -198,9 +198,11 @@ class PlayerActionCounter:
         # Make them appear near tracked players for better testing
         random.seed(42)
         
+        # Use the 12 actual action classes from ball-action-spotting model
         action_types = [
-            'PASS', 'DRIVE', 'SHOT', 'CROSS', 'HEADER',
-            'HIGH PASS', 'THROW IN', 'FREE KICK'
+            'PASS', 'DRIVE', 'HEADER', 'HIGH PASS', 'OUT', 'CROSS',
+            'THROW IN', 'SHOT', 'BALL PLAYER BLOCK', 'PLAYER SUCCESSFUL TACKLE',
+            'FREE KICK', 'GOAL'
         ]
         
         # Get frames where players are tracked
