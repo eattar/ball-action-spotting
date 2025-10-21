@@ -233,12 +233,10 @@ class PlayerActionCounter:
             from src.ball_action import constants
             
             # Try to import frame fetchers, prefer NvDec but fall back to OpenCV
-            try:
-                from src.frame_fetchers import NvDecFrameFetcher
-                use_nvdec = True
-            except ImportError:
-                from src.frame_fetchers import OpencvFrameFetcher
-                use_nvdec = False
+            from src.frame_fetchers import NvDecFrameFetcher, OpencvFrameFetcher
+            
+            # Check if NvDec is actually available (not None)
+            use_nvdec = (NvDecFrameFetcher is not None)
             
             # Load model
             predictor = MultiDimStackerPredictor(
