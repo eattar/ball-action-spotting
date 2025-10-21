@@ -72,7 +72,15 @@ def get_videos_data(games: list[str],
 
 def raw_predictions_to_actions(frame_indexes: list[int], raw_predictions: np.ndarray):
     class2actions = dict()
+    # Only process classes that the model actually outputs
+    num_output_classes = raw_predictions.shape[1]
+    
     for cls, cls_index in constants.class2target.items():
+        # Skip classes that the model doesn't output
+        if cls_index >= num_output_classes:
+            print(f"Skipping {cls} (index {cls_index}) - model only outputs {num_output_classes} classes")
+            continue
+            
         class2actions[cls] = post_processing(
             frame_indexes, raw_predictions[:, cls_index], **constants.postprocess_params
         )
