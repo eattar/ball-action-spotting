@@ -15,16 +15,18 @@ sys.path.append(str(Path(__file__).parent))
 from player_action_counter import PlayerActionCounter
 
 
-def quick_test(video_path: str, player_id: int = None):
+def quick_test(video_path: str, player_id: int = None, model_path: str = None):
     """
     Quick test function - minimal arguments
     
     Usage:
         python run_mvp.py video.mp4
         python run_mvp.py video.mp4 7
+        python run_mvp.py video.mp4 7 model.pth
     """
     counter = PlayerActionCounter(
         yolo_model='yolov8n.pt',  # Fastest model
+        action_model_path=model_path,  # Real action detection model (optional)
         device='cuda'
     )
     
@@ -50,17 +52,24 @@ if __name__ == '__main__':
         print("=" * 60)
         print("Player Action Counter - Quick Test Script")
         print("=" * 60)
-        print("\nUsage: python run_mvp.py <video_path> [player_id]")
+        print("\nUsage: python run_mvp.py <video_path> [player_id] [model_path]")
         print("\nArguments:")
         print("  video_path    Path to video file (required)")
         print("  player_id     Player track ID to analyze (optional)")
         print("                If not provided, will show interactive selection")
+        print("  model_path    Path to trained action model .pth file (optional)")
+        print("                If not provided, uses placeholder detection")
         print("\nExamples:")
         print("  python run_mvp.py match.mp4")
         print("    → Shows first frame with player IDs, lets you select")
+        print("    → Uses placeholder action detection")
         print()
         print("  python run_mvp.py match.mp4 7")
         print("    → Directly tracks player #7")
+        print("    → Uses placeholder action detection")
+        print()
+        print("  python run_mvp.py match.mp4 7 data/ball_action/experiments/ball_finetune_long_004/fold_0/model-006-0.864002.pth")
+        print("    → Tracks player #7 using real trained model")
         print()
         print("\nOptions:")
         print("  Settings: Uses yolov8n.pt, CUDA, sample_rate=5")
@@ -75,6 +84,8 @@ if __name__ == '__main__':
     
     # Parse player_id with better error handling
     player = None
+    model = None
+    
     if len(sys.argv) > 2:
         try:
             player = int(sys.argv[2])
@@ -89,6 +100,12 @@ if __name__ == '__main__':
             print(f"   Received {len(sys.argv)} arguments: {sys.argv[1:]}")
             sys.exit(1)
     
+    if len(sys.argv) > 3:
+        model = sys.argv[3]
+        if not os.path.exists(model):
+            print(f"❌ Error: Model file not found: {model}")
+            sys.exit(1)
+    
     # Check if video file exists
     if not os.path.exists(video):
         print(f"❌ Error: Video file not found: {video}")
@@ -97,4 +114,4 @@ if __name__ == '__main__':
         print(f'   python run_mvp.py "/path/with spaces/video.mp4"')
         sys.exit(1)
     
-    quick_test(video, player)
+    quick_test(video, player, model)

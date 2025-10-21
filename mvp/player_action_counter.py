@@ -173,7 +173,22 @@ class PlayerActionCounter:
         """
         Detect ball actions in video
         
-        For MVP, this uses placeholder data. Replace with actual model inference.
+        Uses trained ball-action-spotting model if available, otherwise placeholder data.
+        
+        Args:
+            video_path: Path to video file
+            
+        Returns:
+            List of action dictionaries with keys: frame, action, confidence
+        """
+        if self.action_model_path and os.path.exists(self.action_model_path):
+            return self._detect_actions_real(video_path)
+        else:
+            return self._detect_actions_placeholder(video_path)
+    
+    def _detect_actions_real(self, video_path: str) -> List[Dict]:
+        """
+        Detect actions using trained ball-action-spotting model
         
         Args:
             video_path: Path to video file
@@ -181,10 +196,99 @@ class PlayerActionCounter:
         Returns:
             List of action dictionaries
         """
-        # TODO: Integrate with actual ball-action-spotting model
-        # from scripts.ball_action.predict import predict_video
+        print("  🎯 Using trained ball-action-spotting model")
+        print(f"  Model: {self.action_model_path}")
         
-        print("  ⚠️  Using placeholder action detection (integrate real model later)")
+        try:
+            import numpy as np
+            from src.predictors import MultiDimStackerPredictor
+            from src.ball_action.annotations import raw_predictions_to_actions
+            from src.frame_fetchers import OpenCVFrameFetcher
+            from src.ball_action import constants
+            
+            # Load model
+            predictor = MultiDimStackerPredictor(
+                self.action_model_path,
+                device=self.device,
+                tta=True  # Test-time augmentation
+            )
+            
+            # Get video info
+            import cv2
+            cap = cv2.VideoCapture(video_path)
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap.release()
+            
+            # Create frame fetcher
+            frame_fetcher = OpenCVFrameFetcher(video_path)
+            frame_fetcher.num_frames = total_frames
+            
+            # Run inference
+            indexes_generator = predictor.indexes_generator
+            INDEX_SAVE_ZONE = 1
+            min_frame_index = indexes_generator.clip_index(0, total_frames, INDEX_SAVE_ZONE)
+            max_frame_index = indexes_generator.clip_index(total_frames, total_frames, INDEX_SAVE_ZONE)
+            
+            frame_index2prediction = dict()
+            predictor.reset_buffers()
+            
+            print(f"  Processing {total_frames} frames...")
+            from tqdm import tqdm
+            with tqdm(total=total_frames, desc="  Detecting actions") as pbar:
+                while True:
+                    frame = frame_fetcher.fetch_frame()
+                    frame_index = frame_fetcher.current_index
+                    prediction, predict_index = predictor.predict(frame, frame_index)
+                    
+                    if predict_index < min_frame_index:
+                        pbar.update(1)
+                        continue
+                    
+                    if prediction is not None:
+                        frame_index2prediction[predict_index] = prediction.cpu().numpy()
+                    
+                    pbar.update(1)
+                    
+                    if predict_index == max_frame_index:
+                        break
+            
+            predictor.reset_buffers()
+            
+            # Convert predictions to actions
+            frame_indexes = sorted(frame_index2prediction.keys())
+            raw_predictions = np.stack([frame_index2prediction[i] for i in frame_indexes], axis=0)
+            class2actions = raw_predictions_to_actions(frame_indexes, raw_predictions)
+            
+            # Flatten to single list
+            all_actions = []
+            for class_name, class_actions in class2actions.items():
+                for action_frame, action_confidence in class_actions:
+                    all_actions.append({
+                        'frame': action_frame,
+                        'action': class_name,
+                        'confidence': action_confidence
+                    })
+            
+            all_actions = sorted(all_actions, key=lambda x: x['frame'])
+            print(f"  ✓ Detected {len(all_actions)} actions")
+            return all_actions
+            
+        except Exception as e:
+            print(f"  ⚠️  Error using real model: {e}")
+            print(f"  Falling back to placeholder detection")
+            return self._detect_actions_placeholder(video_path)
+    
+    def _detect_actions_placeholder(self, video_path: str) -> List[Dict]:
+        """
+        Generate placeholder actions for testing when model not available
+        
+        Args:
+            video_path: Path to video file
+            
+        Returns:
+            List of action dictionaries
+        """
+        print("  ⚠️  Using placeholder action detection (no model loaded)")
         
         import cv2
         import random
