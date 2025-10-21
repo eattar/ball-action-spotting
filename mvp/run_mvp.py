@@ -45,13 +45,31 @@ def quick_test(video_path: str, player_id: int = None):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Usage: python run_mvp.py <video_path> [player_id]")
+    # Check for help flag
+    if len(sys.argv) < 2 or sys.argv[1] in ['-h', '--help', 'help']:
+        print("=" * 60)
+        print("Player Action Counter - Quick Test Script")
+        print("=" * 60)
+        print("\nUsage: python run_mvp.py <video_path> [player_id]")
+        print("\nArguments:")
+        print("  video_path    Path to video file (required)")
+        print("  player_id     Player track ID to analyze (optional)")
+        print("                If not provided, will show interactive selection")
         print("\nExamples:")
-        print("  python run_mvp.py match.mp4              # Interactive selection")
-        print("  python run_mvp.py match.mp4 7            # Track player #7")
-        print("\nFor more options, use player_action_counter.py directly")
-        sys.exit(1)
+        print("  python run_mvp.py match.mp4")
+        print("    → Shows first frame with player IDs, lets you select")
+        print()
+        print("  python run_mvp.py match.mp4 7")
+        print("    → Directly tracks player #7")
+        print()
+        print("\nOptions:")
+        print("  Settings: Uses yolov8n.pt, CUDA, sample_rate=5")
+        print("  Output:   Saves to player_<ID>_actions.json")
+        print()
+        print("For advanced options (different YOLO model, CPU mode, etc):")
+        print("  python mvp/player_action_counter.py --help")
+        print("=" * 60)
+        sys.exit(0)
     
     video = sys.argv[1]
     player = int(sys.argv[2]) if len(sys.argv) > 2 else None
