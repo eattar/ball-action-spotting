@@ -5,20 +5,23 @@
 ```bash
 # Most common use cases
 
-# 1. Interactive selection
+# 1. Interactive selection (placeholder actions)
 python mvp/run_mvp.py video.mp4
 
-# 2. Specific player
+# 2. Specific player (placeholder actions)
 python mvp/run_mvp.py video.mp4 7
 
-# 3. Quick test (first 500 frames)
+# 3. REAL MODEL - Recommended (90% accuracy)
+python mvp/run_mvp.py video.mp4 7 data/ball_action/experiments/ball_finetune_long_004/fold_5/model-006-0.901643.pth
+
+# 4. Quick test (first 500 frames)
 python mvp/player_action_counter.py video.mp4 --max-frames 500
 
-# 4. Fast mode
+# 5. Fast mode
 python mvp/player_action_counter.py video.mp4 --sample-rate 10 --yolo-model yolov8n.pt
 
-# 5. Accurate mode
-python mvp/player_action_counter.py video.mp4 --sample-rate 1 --yolo-model yolov8x.pt
+# 6. Accurate mode with real model
+python mvp/player_action_counter.py video.mp4 --sample-rate 1 --yolo-model yolov8x.pt --action-model data/ball_action/experiments/ball_finetune_long_004/fold_5/model-006-0.901643.pth
 ```
 
 ## Installation
