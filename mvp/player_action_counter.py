@@ -245,6 +245,8 @@ class PlayerActionCounter:
                 tta=True  # Test-time augmentation
             )
             
+            print(f"  Model loaded on: {predictor.device}")
+            
             # Get video info
             import cv2
             cap = cv2.VideoCapture(video_path)
@@ -253,11 +255,11 @@ class PlayerActionCounter:
             
             # Create frame fetcher based on availability
             if use_nvdec:
-                print("  Using NvDec frame fetcher (GPU accelerated)")
+                print("  Video decoding: NvDec (GPU accelerated)")
                 gpu_id = 0 if self.device == 'cuda' else int(self.device.split(':')[1])
                 frame_fetcher = NvDecFrameFetcher(video_path, gpu_id=gpu_id)
             else:
-                print("  Using OpenCV frame fetcher (CPU)")
+                print("  Video decoding: OpenCV (CPU decode, GPU inference)")
                 gpu_id = 0 if self.device == 'cuda' else int(self.device.split(':')[1])
                 frame_fetcher = OpencvFrameFetcher(video_path, gpu_id=gpu_id)
             
