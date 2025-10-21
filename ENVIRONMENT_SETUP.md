@@ -5,8 +5,13 @@
 ### Option 1: Automated Setup (Recommended)
 
 ```bash
-# Run the setup script
+# Run the setup script (interactive)
 ./setup_conda_env.sh
+
+# It will ask you to choose:
+#   1) Standard (GPU, no NvDec) - Recommended
+#   2) GPU Full (with NvDec) - Advanced users only
+#   3) CPU Only
 
 # Activate the environment
 conda activate ball-action-spotting
@@ -17,8 +22,9 @@ python -c "from src.player_tracking import PlayerTracker; print('✓ Installatio
 
 ### Option 2: Manual Setup
 
+**Standard GPU Setup (Recommended):**
 ```bash
-# Create environment from YAML file
+# Create environment without NvDec (most compatible)
 conda env create -f environment.yml
 
 # Activate environment
@@ -27,6 +33,20 @@ conda activate ball-action-spotting
 # Verify installation
 python -c "import torch; print(f'PyTorch: {torch.__version__}')"
 python -c "from ultralytics import YOLO; print('✓ YOLO OK')"
+```
+
+**CPU-Only Setup:**
+```bash
+conda env create -f environment-cpu.yml
+conda activate ball-action-spotting
+```
+
+**Advanced: GPU with NvDec (Optional):**
+```bash
+# Only if you need NVIDIA hardware video decoding
+# Requires: NVIDIA GPU, drivers, and build tools
+conda env create -f environment-gpu-full.yml
+conda activate ball-action-spotting
 ```
 
 ## Environment Details
@@ -38,7 +58,23 @@ python -c "from ultralytics import YOLO; print('✓ YOLO OK')"
   - YOLOv8 (ultralytics)
   - OpenCV
   - PyTorch
-  - Video processing (NVIDIA VPF)
+  - Video processing (NVIDIA VPF) - **Optional**
+
+## Available Environment Files
+
+1. **`environment.yml`** - Standard GPU setup (Recommended)
+   - GPU support via CUDA
+   - No NvDec (uses OpenCV for video)
+   - Most compatible
+
+2. **`environment-cpu.yml`** - CPU-only setup
+   - No GPU required
+   - Slower but works everywhere
+
+3. **`environment-gpu-full.yml`** - Advanced GPU setup
+   - Includes NVIDIA NvDec for hardware video decoding
+   - Requires NVIDIA GPU + drivers
+   - Complex build, may fail on some systems
 
 ## Updating the Environment
 
@@ -88,11 +124,27 @@ Install Miniconda: https://docs.conda.io/en/latest/miniconda.html
 - Or reduce batch sizes in code
 
 ### "VideoProcessingFramework installation fails"
-This requires NVIDIA GPU and drivers. Skip if using CPU:
+
+**Solution**: Use standard environment without NvDec
+
 ```bash
-# Remove from environment.yml or requirements.txt
-# git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0
+# Use the standard environment (recommended)
+conda env create -f environment.yml
+
+# NvDec is OPTIONAL - the project works fine without it
+# OpenCV will be used for video decoding instead
 ```
+
+**Why NvDec fails:**
+- Requires NVIDIA GPU drivers
+- Needs CMake 3.20+
+- Complex C++ build process
+- May not work on all systems
+
+**Do you need NvDec?**
+- ❌ **No** - For player tracking MVP (uses OpenCV)
+- ❌ **No** - For most use cases
+- ✅ **Yes** - Only if you need hardware-accelerated video decoding for the original ball-action model training
 
 ### PyTorch CUDA not available
 ```bash

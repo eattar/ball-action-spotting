@@ -16,6 +16,38 @@ fi
 
 echo "✓ Conda found: $(conda --version)"
 
+# Ask user which environment to create
+echo ""
+echo "Select environment type:"
+echo "  1) Standard (GPU, no NvDec) - Recommended for most users"
+echo "  2) GPU Full (with NvDec) - Requires NVIDIA drivers + complex setup"
+echo "  3) CPU Only - No GPU required"
+echo ""
+read -p "Enter choice [1-3] (default: 1): " choice
+choice=${choice:-1}
+
+case $choice in
+    1)
+        ENV_FILE="environment.yml"
+        echo "Using standard GPU environment (without NvDec)"
+        ;;
+    2)
+        ENV_FILE="environment-gpu-full.yml"
+        echo "Using full GPU environment (with NvDec)"
+        echo "⚠️  Warning: This requires NVIDIA GPU drivers and may fail on some systems"
+        ;;
+    3)
+        ENV_FILE="environment-cpu.yml"
+        echo "Using CPU-only environment"
+        ;;
+    *)
+        echo "Invalid choice. Using default (standard GPU)"
+        ENV_FILE="environment.yml"
+        ;;
+esac
+
+echo "Environment file: $ENV_FILE"
+
 # Remove existing environment if it exists
 if conda env list | grep -q "ball-action-spotting"; then
     echo ""
@@ -34,8 +66,8 @@ fi
 
 # Create environment from YAML file
 echo ""
-echo "Creating conda environment from environment.yml..."
-conda env create -f environment.yml
+echo "Creating conda environment from $ENV_FILE..."
+conda env create -f "$ENV_FILE"
 
 echo ""
 echo "=================================================="

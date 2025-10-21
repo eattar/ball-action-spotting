@@ -31,5 +31,7 @@ dependencies:
     - pytorch-argus==1.0.0
     - ultralytics>=8.0.0
     - lap>=0.4.0
-    - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0
-    - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0#subdirectory=src/PytorchNvCodec
+    # Note: VideoProcessingFramework (NvDec) is optional and requires NVIDIA GPU + drivers
+    # Uncomment if you have NVIDIA GPU and need hardware video decoding:
+    # - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0
+    # - git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0#subdirectory=src/PytorchNvCodec
