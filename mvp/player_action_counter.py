@@ -230,8 +230,15 @@ class PlayerActionCounter:
             import numpy as np
             from src.predictors import MultiDimStackerPredictor
             from src.ball_action.annotations import raw_predictions_to_actions
-            from src.frame_fetchers import OpenCVFrameFetcher
             from src.ball_action import constants
+            
+            # Try to import frame fetchers, prefer NvDec but fall back to OpenCV
+            try:
+                from src.frame_fetchers import NvDecFrameFetcher
+                use_nvdec = True
+            except ImportError:
+                from src.frame_fetchers import OpencvFrameFetcher
+                use_nvdec = False
             
             # Load model
             predictor = MultiDimStackerPredictor(
@@ -246,8 +253,16 @@ class PlayerActionCounter:
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             cap.release()
             
-            # Create frame fetcher
-            frame_fetcher = OpenCVFrameFetcher(video_path)
+            # Create frame fetcher based on availability
+            if use_nvdec:
+                print("  Using NvDec frame fetcher (GPU accelerated)")
+                gpu_id = 0 if self.device == 'cuda' else int(self.device.split(':')[1])
+                frame_fetcher = NvDecFrameFetcher(video_path, gpu_id=gpu_id)
+            else:
+                print("  Using OpenCV frame fetcher (CPU)")
+                gpu_id = 0 if self.device == 'cuda' else int(self.device.split(':')[1])
+                frame_fetcher = OpencvFrameFetcher(video_path, gpu_id=gpu_id)
+            
             frame_fetcher.num_frames = total_frames
             
             # Run inference
