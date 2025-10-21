@@ -35,7 +35,8 @@ def load_ball_actions(json_path: str) -> List[Dict]:
         
         actions.append({
             'frame': frame,
-            'label': pred['label'],
+            'action': pred['label'],  # Use 'action' key for compatibility with matcher
+            'label': pred['label'],   # Keep 'label' for reference
             'confidence': float(pred['confidence']),
             'game_time': pred['gameTime'],
             'position_ms': int(pred['position'])
