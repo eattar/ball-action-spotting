@@ -11,3 +11,7 @@ kornia==0.6.12
 pytorch-argus==1.0.0
 git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0
 git+https://github.com/NVIDIA/VideoProcessingFramework@v2.0.0#subdirectory=src/PytorchNvCodec
+
+# Player tracking dependencies
+ultralytics>=8.0.0  # YOLOv8/v11 for player detection
+lap>=0.4.0          # Linear Assignment Problem solver for tracking
