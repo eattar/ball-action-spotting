@@ -46,15 +46,14 @@ def analyze_json(json_path):
     
     # Count predictions by label
     label_counts = {}
-    all_predictions = []
+    all_predictions = data['predictions']
     
-    for url_local, predictions in data['UrlLocal'].items():
-        for pred in predictions['predictions']:
-            label = pred['label']
-            label_counts[label] = label_counts.get(label, 0) + 1
-            all_predictions.append(pred)
+    for pred in all_predictions:
+        label = pred['label']
+        label_counts[label] = label_counts.get(label, 0) + 1
     
-    print(f"\nTotal predictions: {len(all_predictions)}")
+    print(f"\nGame: {data['UrlLocal']}")
+    print(f"Total predictions: {len(all_predictions)}")
     print(f"Unique labels: {list(label_counts.keys())}")
     print(f"\nPredictions by label:")
     for label, count in sorted(label_counts.items(), key=lambda x: x[1], reverse=True):
@@ -62,11 +61,20 @@ def analyze_json(json_path):
     
     # Show confidence statistics
     if all_predictions:
-        confidences = [p['confidence'] for p in all_predictions]
+        confidences = [float(p['confidence']) for p in all_predictions]
         print(f"\nConfidence statistics:")
         print(f"  Min: {min(confidences):.4f}")
         print(f"  Max: {max(confidences):.4f}")
         print(f"  Mean: {sum(confidences)/len(confidences):.4f}")
+        
+    # Show some example predictions
+    print(f"\nFirst 5 predictions:")
+    for i, pred in enumerate(all_predictions[:5]):
+        print(f"  {i+1}. {pred['gameTime']} - {pred['label']} (conf: {float(pred['confidence']):.4f}, pos: {pred['position']})")
+    
+    print(f"\nLast 5 predictions:")
+    for i, pred in enumerate(all_predictions[-5:]):
+        print(f"  {len(all_predictions)-4+i}. {pred['gameTime']} - {pred['label']} (conf: {float(pred['confidence']):.4f}, pos: {pred['position']})")
 
 
 if __name__ == "__main__":
