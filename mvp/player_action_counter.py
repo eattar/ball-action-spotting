@@ -195,6 +195,7 @@ class PlayerActionCounter:
         cap.release()
         
         # Generate placeholder actions for testing
+        # Make them appear near tracked players for better testing
         random.seed(42)
         
         action_types = [
@@ -202,19 +203,42 @@ class PlayerActionCounter:
             'HIGH PASS', 'THROW IN', 'FREE KICK'
         ]
         
-        num_actions = min(15, total_frames // 50)
-        actions = []
+        # Get frames where players are tracked
+        tracked_frames = sorted(self.tracker.tracks.keys())
         
-        for _ in range(num_actions):
-            frame = random.randint(0, total_frames - 1)
-            action = random.choice(action_types)
-            confidence = random.uniform(0.6, 0.95)
+        if tracked_frames:
+            # Generate actions near tracked frames for better testing
+            num_actions = min(30, len(tracked_frames) // 10)
+            actions = []
             
-            actions.append({
-                'frame': frame,
-                'action': action,
-                'confidence': confidence
-            })
+            for _ in range(num_actions):
+                # Pick a random tracked frame
+                base_frame = random.choice(tracked_frames)
+                # Add small offset (±10 frames) to simulate action timing
+                frame = max(0, min(total_frames - 1, base_frame + random.randint(-10, 10)))
+                action = random.choice(action_types)
+                confidence = random.uniform(0.6, 0.95)
+                
+                actions.append({
+                    'frame': frame,
+                    'action': action,
+                    'confidence': confidence
+                })
+        else:
+            # Fallback to random distribution if no tracks
+            num_actions = min(15, total_frames // 50)
+            actions = []
+            
+            for _ in range(num_actions):
+                frame = random.randint(0, total_frames - 1)
+                action = random.choice(action_types)
+                confidence = random.uniform(0.6, 0.95)
+                
+                actions.append({
+                    'frame': frame,
+                    'action': action,
+                    'confidence': confidence
+                })
         
         return sorted(actions, key=lambda x: x['frame'])
     
