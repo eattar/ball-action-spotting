@@ -118,6 +118,33 @@ class PlayerActionCounter:
         
         if not player_tracks:
             print(f"❌ Player #{player_id} not found in video")
+            print()
+            
+            # Show available players
+            available_ids = self.tracker.get_available_track_ids()
+            if available_ids:
+                print(f"📋 Found {len(available_ids)} players in this video")
+                print()
+                print("Top 20 players by appearance frequency:")
+                print()
+                print(f"{'Rank':<6} {'Player ID':<12} {'Frames':<10} {'% of Video':<12}")
+                print("-" * 60)
+                
+                total_tracked_frames = len(all_tracks)
+                for rank, track_id in enumerate(available_ids[:20], 1):
+                    stats = self.tracker.get_track_statistics(track_id)
+                    num_frames = stats['num_frames']
+                    percentage = (num_frames / total_tracked_frames) * 100
+                    print(f"{rank:<6} #{track_id:<11} {num_frames:<10} {percentage:>5.1f}%")
+                
+                if len(available_ids) > 20:
+                    print()
+                    print(f"... and {len(available_ids) - 20} more players")
+                
+                print()
+                print("💡 Tip: Use one of the player IDs shown above")
+                print(f"   Example: python mvp/run_mvp.py video.mp4 {available_ids[0]}")
+            
             return {}
         
         track_stats = self.tracker.get_track_statistics(player_id)

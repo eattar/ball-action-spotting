@@ -86,7 +86,7 @@ if __name__ == '__main__':
     player = None
     model = None
     
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 2 and sys.argv[2]:  # Check if not empty string
         try:
             player = int(sys.argv[2])
         except ValueError:
@@ -98,6 +98,9 @@ if __name__ == '__main__':
             print()
             print(f"   It looks like you might have unquoted spaces in your path.")
             print(f"   Received {len(sys.argv)} arguments: {sys.argv[1:]}")
+            print()
+            print("💡 To see available players, just run:")
+            print(f"   python run_mvp.py video.mp4")
             sys.exit(1)
     
     if len(sys.argv) > 3:
