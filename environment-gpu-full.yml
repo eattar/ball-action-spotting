@@ -17,8 +17,8 @@ dependencies:
   
   # Computer Vision
   - opencv=4.7.0
-  - pytorch>=2.0
-  - torchvision
+  - pytorch>=2.0,<2.6  # Pin to compatible version with torchvision
+  - torchvision>=0.15,<0.21  # Compatible with pytorch 2.0-2.5
   - cudatoolkit=11.8
   
   # Build tools for NvDec (required for VideoProcessingFramework)
