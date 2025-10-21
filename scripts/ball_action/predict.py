@@ -34,7 +34,7 @@ def get_raw_predictions(predictor: MultiDimStackerPredictor,
         frame_fetcher = NvDecFrameFetcher(video_path, gpu_id=predictor.device.index)
         print("Using NvDecFrameFetcher for video decoding")
     else:
-        frame_fetcher = OpencvFrameFetcher(video_path)
+        frame_fetcher = OpencvFrameFetcher(video_path, gpu_id=predictor.device.index)
         print("Using OpencvFrameFetcher for video decoding (NvDec not available)")
     
     frame_fetcher.num_frames = frame_count
