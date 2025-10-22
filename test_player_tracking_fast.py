@@ -88,7 +88,8 @@ def track_players_fast(
     video_path: str, 
     action_windows: List[tuple],
     yolo_model: str = 'yolov8n.pt',
-    frame_skip: int = 2
+    frame_skip: int = 2,
+    select_player_id: int = None
 ) -> Dict:
     """
     Run fast player tracking only during action windows
@@ -98,6 +99,7 @@ def track_players_fast(
         action_windows: List of (start_frame, end_frame) tuples
         yolo_model: YOLO model (use 'n' for fastest)
         frame_skip: Process every Nth frame (2 = every other frame)
+        select_player_id: Manually specify player ID (None = auto-select most frequent)
     """
     print(f"\nRunning FAST player tracking...")
     print(f"Frame skip: {frame_skip} (processing {100/frame_skip:.0f}% of frames)")
@@ -177,14 +179,23 @@ def track_players_fast(
     for tid, count in top_players:
         print(f"  Player {tid}: {count} frames")
     
-    # Select player (simplified - just pick most frequent)
-    selected_player_id = top_players[0][0]
-    print(f"\nAuto-selecting most frequent player: {selected_player_id}")
+    # Select player
+    if select_player_id is not None:
+        if select_player_id not in track_counts:
+            print(f"\n❌ Error: Player {select_player_id} not found in tracked players!")
+            print(f"Available players: {sorted(track_counts.keys())[:50]}")
+            raise ValueError(f"Player {select_player_id} not found")
+        selected_player_id = select_player_id
+        print(f"\nUsing manually selected player: {selected_player_id} ({track_counts[selected_player_id]} frames)")
+    else:
+        selected_player_id = top_players[0][0]
+        print(f"\nAuto-selecting most frequent player: {selected_player_id}")
     
     return {
         'all_detections': all_detections,
         'selected_player_id': selected_player_id,
-        'frame_skip': frame_skip
+        'frame_skip': frame_skip,
+        'top_players': top_players  # Include for reference
     }
 
 
@@ -244,6 +255,7 @@ def main():
     parser.add_argument('--frame-skip', type=int, default=2, help='Process every Nth frame (default: 2)')
     parser.add_argument('--window-before', type=int, default=50, help='Frames before action (default: 50)')
     parser.add_argument('--window-after', type=int, default=25, help='Frames after action (default: 25)')
+    parser.add_argument('--player-id', type=int, help='Manually select player ID (default: auto-select most frequent)')
     parser.add_argument('--output', help='Output JSON file for results')
     
     args = parser.parse_args()
@@ -272,7 +284,8 @@ def main():
         args.video, 
         action_windows,
         args.yolo_model,
-        args.frame_skip
+        args.frame_skip,
+        args.player_id
     )
     
     # Step 4: Match actions to player
