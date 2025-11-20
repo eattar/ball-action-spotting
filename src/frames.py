@@ -23,6 +23,11 @@ def pad_to_frames(frames: torch.Tensor,
         new_width = int(width * scale)
         new_height = int(height * scale)
         
+        # Convert to float for interpolation if needed
+        original_dtype = frames.dtype
+        if frames.dtype == torch.uint8:
+            frames = frames.float()
+        
         # Resize using interpolate
         frames = torch.nn.functional.interpolate(
             frames,
@@ -30,6 +35,11 @@ def pad_to_frames(frames: torch.Tensor,
             mode='bilinear',
             align_corners=False
         )
+        
+        # Convert back to original dtype
+        if original_dtype == torch.uint8:
+            frames = frames.to(torch.uint8)
+        
         height, width = new_height, new_width
     
     height_pad = target_height - height
