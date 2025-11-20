@@ -14,8 +14,26 @@ def pad_to_frames(frames: torch.Tensor,
                   pad_mode: str = "constant",
                   fill_value: int = 0) -> torch.Tensor:
     height, width = frames.shape[-2:]
-    height_pad = size[1] - height
-    width_pad = size[0] - width
+    target_width, target_height = size
+    
+    # If frames are larger than target size, resize first
+    if height > target_height or width > target_width:
+        # Resize maintaining aspect ratio to fit within target size
+        scale = min(target_width / width, target_height / height)
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+        
+        # Resize using interpolate
+        frames = torch.nn.functional.interpolate(
+            frames,
+            size=(new_height, new_width),
+            mode='bilinear',
+            align_corners=False
+        )
+        height, width = new_height, new_width
+    
+    height_pad = target_height - height
+    width_pad = target_width - width
     assert height_pad >= 0 and width_pad >= 0
 
     top_height_pad: int = height_pad // 2
