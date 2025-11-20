@@ -63,7 +63,8 @@ class PlayerDetector:
         iou_threshold: float = 0.5,
         min_height: int = 30,
         min_width: int = 15,
-        device: str = 'cuda'
+        device: str = 'cuda',
+        classes: List[int] = None
     ):
         """
         Initialize player detector
@@ -76,6 +77,7 @@ class PlayerDetector:
             min_height: Minimum bbox height in pixels (filters out distant/small detections)
             min_width: Minimum bbox width in pixels
             device: 'cuda' or 'cpu'
+            classes: List of COCO class IDs to detect (default: [0] for person)
         """
         if not HAS_YOLO:
             raise ImportError("ultralytics not installed. Run: pip install ultralytics")
@@ -87,15 +89,16 @@ class PlayerDetector:
         self.min_height = min_height
         self.min_width = min_width
         self.device = device
+        self.classes = classes if classes is not None else [0]
         
         # Warm up model
         dummy = np.zeros((640, 640, 3), dtype=np.uint8)
         _ = self.model(dummy, verbose=False, device=device)
-        print(f"✓ Player detector initialized on {device}")
+        print(f"✓ Detector initialized on {device} (classes: {self.classes})")
     
     def detect(self, frame: np.ndarray) -> List[PlayerDetection]:
         """
-        Detect players in a single frame
+        Detect objects in a single frame
         
         Args:
             frame: BGR image (opencv format)
@@ -108,7 +111,7 @@ class PlayerDetector:
             frame,
             conf=self.conf_threshold,
             iou=self.iou_threshold,
-            classes=[0],  # 0 = person class in COCO dataset
+            classes=self.classes,
             verbose=False,
             device=self.device
         )
@@ -159,7 +162,7 @@ class PlayerDetector:
                 batch,
                 conf=self.conf_threshold,
                 iou=self.iou_threshold,
-                classes=[0],
+                classes=self.classes,
                 verbose=False,
                 device=self.device
             )
